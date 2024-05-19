@@ -1,0 +1,35 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:movies_api/screens/bottomNavBar/navbar_screen.dart';
+import 'package:movies_api/screens/home/home_screen.dart';
+
+import 'api/movie_api.dart';
+import 'bloc/movies/movies_bloc.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final ApiService movieRepository = ApiService();
+
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: BlocProvider(
+        create: (context) => MoviesBloc(movieRepository),
+        child: NavbarScreen(),
+      ),
+    );
+
+  }
+}
+
