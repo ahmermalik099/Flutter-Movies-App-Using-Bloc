@@ -53,7 +53,6 @@ class _NavbarScreenState extends State<NavbarScreen> {
 
         notchColor: Colors.black87,
 
-        /// restart app if you change removeMargins
         removeMargins: false,
         bottomBarWidth: 500,
         showShadow: false,

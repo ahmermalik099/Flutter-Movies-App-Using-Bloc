@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:movies_api/screens/bottomNavBar/navbar_screen.dart';
 import 'package:movies_api/screens/home/home_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'api/movie_api.dart';
 import 'bloc/movies/movies_bloc.dart';
 
-void main() {
+Future<void> main() async{
+  await dotenv.load(fileName: ".env.dart");
   runApp(const MyApp());
 }
 

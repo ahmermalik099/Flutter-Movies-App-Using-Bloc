@@ -12,6 +12,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController nameController = TextEditingController();
   TextEditingController ageController = TextEditingController();
   TextEditingController contactController = TextEditingController();
+  String getName = '';
+  String getAge = '';
+  String getNo = '';
 
   @override
   Widget build(BuildContext context) {
@@ -57,17 +60,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: <Widget>[
                   ElevatedButton(
                     onPressed: (){
-                      Storage().writeSecureData('name', inputText);
-                      Storage().writeSecureData('age', inputText);
-                      Storage().writeSecureData('contact', inputText);
+                      Storage().writeSecureData('name', nameController.text);
+                      Storage().writeSecureData('age', ageController.text);
+                      Storage().writeSecureData('contact', contactController.text);
+
+                      print('shhhhhhhhhhhhh');
+                      print(nameController.toString());
+                      nameController.clear();
+                      ageController.clear();
+                      contactController.clear();
                     },
 
                     child: Text('Save the Data'),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      String? name = await Storage().readSecureData('name');
+                      String? age = await Storage().readSecureData('age');
+                      String? contact = await Storage().readSecureData('contact');
+                      setState(() {
+                        getName = name ?? 'No Name Found';
+                        getAge = age ?? 'No Age Found';
+                        getNo = contact ?? 'No Contact Found';
+                      });
+                    },
+                    child: Text('Show the Data'),
                   ),
 
 
                 ],
               ),
+              // SizedBox(height: 20),
+              Text(getName),
+              Text('Age: $getAge'),
+              Text('Contact: $getNo'),
             ],
           ),
         ),
