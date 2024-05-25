@@ -27,6 +27,8 @@ dependencies:
   flutter_secure_storage_web:
   flutter_secure_storage_windows:
   flutter_dotenv:
+  sqflite:
+  path:
 
 
 dev_dependencies:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movies_api/screens/profile/storage.dart';
-
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -8,7 +9,46 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String inputText = '';
+  late Database _database;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeDatabase();
+  }
+
+  Future<void> _initializeDatabase() async {
+    _database = await openDatabase(
+      join(await getDatabasesPath(), 'profile_database.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          "CREATE TABLE profiles(id INTEGER PRIMARY KEY, name TEXT, age TEXT, contact TEXT)",
+        );
+        print('Database created');
+      },
+      version: 1,
+    );
+  }
+
+
+  Future<void> _insertProfile(String name, String age, String contact) async { //insert function
+    await _database.insert(
+      'profiles',
+      {'name': name, 'age': age, 'contact': contact},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+
+  Future<Map<String, dynamic>> _getProfile() async { //fetch data
+    final List<Map<String, dynamic>> profiles = await _database.query('profiles', limit: 1);
+    if (profiles.isNotEmpty) {
+      return profiles.first;
+    } else {
+      return {};
+    }
+  }
+
   TextEditingController nameController = TextEditingController();
   TextEditingController ageController = TextEditingController();
   TextEditingController contactController = TextEditingController();
@@ -20,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profile '),
+        title: Text('Profile'),
       ),
       body: Center(
         child: Padding(
@@ -59,42 +99,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   ElevatedButton(
-                    onPressed: (){
-                      Storage().writeSecureData('name', nameController.text);
-                      Storage().writeSecureData('age', ageController.text);
-                      Storage().writeSecureData('contact', contactController.text);
-
-                      print('shhhhhhhhhhhhh');
-                      print(nameController.toString());
+                    onPressed: () async {
+                      await _insertProfile(
+                        nameController.text,
+                        ageController.text,
+                        contactController.text,
+                      );
                       nameController.clear();
                       ageController.clear();
                       contactController.clear();
+                      print('Data Saved');
                     },
-
                     child: Text('Save the Data'),
                   ),
                   SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      String? name = await Storage().readSecureData('name');
-                      String? age = await Storage().readSecureData('age');
-                      String? contact = await Storage().readSecureData('contact');
-                      setState(() {
-                        getName = name ?? 'No Name Found';
-                        getAge = age ?? 'No Age Found';
-                        getNo = contact ?? 'No Contact Found';
-                      });
-                    },
-                    child: Text('Show the Data'),
-                  ),
-
 
                 ],
               ),
-              // SizedBox(height: 20),
-              Text(getName),
-              Text('Age: $getAge'),
-              Text('Contact: $getNo'),
             ],
           ),
         ),
