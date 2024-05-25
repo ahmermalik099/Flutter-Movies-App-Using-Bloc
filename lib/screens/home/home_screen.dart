@@ -1,72 +1,3 @@
-// // lib/movie_page.dart
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-//
-// import '../../bloc/movies/movies_bloc.dart';
-// import '../../models/movies_model.dart';
-//
-//
-// class MoviePage extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Movie App'),
-//       ),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             BlocBuilder<MoviesBloc, MoviesState>(
-//               builder: (context, state) {
-//                 if (state is MoviesInitial) {
-//                   return Text('Enter a movie ID');
-//                 } else if (state is MoviesLoading) {
-//                   return CircularProgressIndicator();
-//                 } else if (state is MoviesLoaded) {
-//                   return MovieDetail(movie: state.movies);
-//                 } else {
-//                   return Container();
-//                 }
-//               },
-//             ),
-//             SizedBox(height: 20),
-//             ElevatedButton(
-//               onPressed: () {
-//                 context.read<MoviesBloc>().add(fetchMovie(157336)); // Example movie ID
-//               },
-//               child: Text('Fetch Movie'),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-//
-// class MovieDetail extends StatelessWidget {
-//   final Movie movie;
-//
-//   const MovieDetail({Key? key, required this.movie}) : super(key: key);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Column(
-//       children: <Widget>[
-//         Text(movie.title, style: TextStyle(fontSize: 24)),
-//         SizedBox(height: 10),
-//         Text(movie.overview),
-//         SizedBox(height: 10),
-//         Text('Release Date: ${movie.releaseDate}'),
-//         SizedBox(height: 10),
-//         Text('Rating: ${movie.voteAverage}'),
-//       ],
-//     );
-//   }
-// }
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -79,95 +10,152 @@ import '../../models/movies_model.dart';
 import '../moviesdetails/details_screen.dart';
 
 class MoviePage extends StatefulWidget {
-
-
   @override
   State<MoviePage> createState() => _MoviePageState();
 }
 
-class _MoviePageState extends State<MoviePage> {
+class _MoviePageState extends State<MoviePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
   void initState() {
     super.initState();
     context.read<MoviesBloc>().add(FetchAllMovies());
+    _tabController = TabController(length: 4, vsync: this);
   }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final movieBloc = BlocProvider.of<MoviesBloc>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Movie App'),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
+        title: Text('What do you want to watch?',
+            style: TextStyle(color: Colors.black, fontSize: 24)),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(400.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: "Search",
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                    ),
+                  ),
+                ),
+              ),
               BlocBuilder<MoviesBloc, MovieState>(
                 builder: (context, state) {
-                   if (state is MovieLoading) {
-                    return CircularProgressIndicator();
+                  if (state is MovieLoading) {
+                    return Center(child: CircularProgressIndicator());
                   } else if (state is MovieLoaded) {
-                    return MovieDetail(movie: state.movie);
+                    return DetailsScreen(movie: state.movie);
                   } else if (state is MovieError) {
-                    return Text('Error: ${state.message}');
-
-                  }
-                  else if(state is AllMovieLoaded){
-                    return Column(
-                      children: state.movies.map((movie) => MovieDetail(movie: movie)).toList(),
+                    return Center(child: Text('Error: ${state.message}'));
+                  } else if (state is AllMovieLoaded) {
+                    return Container(
+                      height: 300,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: state.movies.length,
+                        itemBuilder: (context, index) {
+                          final movie = state.movies[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DetailsScreen(movie: movie),
+                                ),
+                              );
+                            },
+                            child: MyHomeCard(movie: movie),
+                          );
+                        },
+                      ),
                     );
-                  }
-                  else {
+                  } else {
                     return Container();
                   }
-                },
-              ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  movieBloc.add(FetchAllMovies()); // Example movie ID
-                },
-                child: Text('Fetch Movie'),
+                  },
+                  ),
+
+          TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: 'Now playing'),
+              Tab(text: 'Upcoming'),
+              Tab(text: 'Top rated'),
+              Tab(text: 'Popular'),
+            ],
+
               ),
             ],
           ),
         ),
       ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          buildMovieGrid(),
+          buildMovieGrid(),
+          buildMovieGrid(),
+          buildMovieGrid(),
+        ],
+      )
     );
   }
-}
 
-class MovieDetail extends StatelessWidget {
-  final Movie movie;
-
-  const MovieDetail({Key? key, required this.movie}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height/2.1,
-      color: Colors.white,
-      child: GridView.builder(
-
-        shrinkWrap: true,
-          primary: false,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 4.0,
-            mainAxisSpacing: 4.0,
-            childAspectRatio: 0.7,
-          ),
-          itemCount: 2,
-          itemBuilder: (context,index){
-            return GestureDetector(
-              onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsScreen(movie: movie,)));
-              },
-              child: MyHomeCard(movie: movie)
-            );
-          }
-      ),
+  Widget buildMovieGrid() {
+    return BlocBuilder<MoviesBloc, MovieState>(
+      builder: (context, state) {
+        if (state is MovieLoading) {
+          return Center(child: CircularProgressIndicator());
+        } else if (state is MovieLoaded) {
+          return DetailsScreen(movie: state.movie);
+        } else if (state is MovieError) {
+          return Center(child: Text('Error: ${state.message}'));
+        } else if (state is AllMovieLoaded) {
+          return GridView.builder(
+            padding: const EdgeInsets.all(8.0),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 4.0,
+              mainAxisSpacing: 4.0,
+              childAspectRatio: 0.7,
+            ),
+            itemCount: state.movies.length,
+            itemBuilder: (context, index) {
+              final movie = state.movies[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailsScreen(movie: movie),
+                    ),
+                  );
+                },
+                child: MyHomeCard(movie: movie),
+              );
+            },
+          );
+        } else {
+          return Center(child: Text('No movies found'));
+        }
+      },
     );
   }
 }
