@@ -56,7 +56,7 @@ class MoviesBloc extends Bloc<MovieEvent, MovieState> {
           final movie = await apiService.fetchMovie(event.movieId);
           emit(MovieLoaded(movie));
         } catch (e) {
-          emit(MovieError("Failed to fetch movie: $e"));
+          emit(MovieError("Failed to fetch movie: $e", errorMessage: ''));
         }
       } else if (event is FetchAllMovies) { // Add this part for fetching all movies
         emit(MovieLoading());
@@ -64,7 +64,7 @@ class MoviesBloc extends Bloc<MovieEvent, MovieState> {
           final movies = await apiService.fetchAllMovie();
           emit(AllMovieLoaded(movies));
         } catch (e) {
-          emit(MovieError("Failed to fetch all movies: $e"));
+          emit(MovieError("Failed to fetch all movies: $e", errorMessage: ''));
         }
       }
 
