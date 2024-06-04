@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:movies_api/screens/profile/storage.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -18,43 +17,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _initializeDatabase() async {
-    _database = await openDatabase(
-      join(await getDatabasesPath(), 'profile_database.db'),
-      onCreate: (db, version) {
-        return db.execute(
-          "CREATE TABLE profiles(id INTEGER PRIMARY KEY, name TEXT, age TEXT, contact TEXT)",
-        );
-        print('Database created');
-      },
-      version: 1,
-    );
+    print('inside _initializeDatabase');
+    try {
+      final dbPath = await getDatabasesPath();
+      final path = join(dbPath, 'profile_database.db');
+      _database = await openDatabase(
+        path,
+        onCreate: (db, version) async {
+          print('Creating database at $path');
+          await db.execute(
+            "CREATE TABLE profiles(id INTEGER PRIMARY KEY, name TEXT, age TEXT, contact TEXT)",
+          );
+          print('Database created');
+        },
+        version: 1,
+      );
+      print('Database initialized');
+    } catch (e) {
+      print('Error initializing database: $e');
+    }
   }
 
-
-  Future<void> _insertProfile(String name, String age, String contact) async { //insert function
-    await _database.insert(
-      'profiles',
-      {'name': name, 'age': age, 'contact': contact},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  Future<void> _insertProfile(String name, String age, String contact) async {
+    try {
+      await _database.insert(
+        'profiles',
+        {'name': name, 'age': age, 'contact': contact},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print('Profile inserted: $name, $age, $contact');
+    } catch (e) {
+      print('Error inserting profile: $e');
+    }
   }
 
-
-  Future<Map<String, dynamic>> _getProfile() async { //fetch data
-    final List<Map<String, dynamic>> profiles = await _database.query('profiles', limit: 1);
-    if (profiles.isNotEmpty) {
-      return profiles.first;
-    } else {
-      return {};
+  Future<List<Map<String, dynamic>>> _getAllProfiles() async {
+    try {
+      return await _database.query('profiles');
+    } catch (e) {
+      print('Error fetching profiles: $e');
+      return [];
     }
   }
 
   TextEditingController nameController = TextEditingController();
   TextEditingController ageController = TextEditingController();
   TextEditingController contactController = TextEditingController();
-  String getName = '';
-  String getAge = '';
-  String getNo = '';
 
   @override
   Widget build(BuildContext context) {
@@ -109,12 +117,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ageController.clear();
                       contactController.clear();
                       print('Data Saved');
+                      setState(() {}); // Trigger a rebuild to refresh the list
                     },
                     child: Text('Save the Data'),
                   ),
                   SizedBox(height: 20),
-
+                  ElevatedButton(
+                    onPressed: _initializeDatabase,
+                    child: Text('Connect Database'),
+                  ),
                 ],
+              ),
+              SizedBox(height: 20),
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _getAllProfiles(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Text('No profiles found.');
+                    } else {
+                      final profiles = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: profiles.length,
+                        itemBuilder: (context, index) {
+                          final profile = profiles[index];
+                          return ListTile(
+                            title: Text(profile['name']),
+                            subtitle: Text('Age: ${profile['age']}, Contact: ${profile['contact']}'),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
               ),
             ],
           ),

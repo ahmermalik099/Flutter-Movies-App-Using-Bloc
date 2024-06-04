@@ -8,11 +8,11 @@ import '../models/movies_model.dart';
 
 
 class ApiService {
-  final String apiKey = '27f1955b614aba1bb6610eb4fd435202';
-  final String baseUrl = 'https://api.themoviedb.org/3/movie';
+  // final String apiKey = '27f1955b614aba1bb6610eb4fd435202';
+  // final String baseUrl = 'https://api.themoviedb.org/3/movie';
 
-  // final apiKey=dotenv.env['API_KEY'];
-  // final baseUrl=dotenv.env['API_BASE_URL'];
+  final String? apiKey=dotenv.env['API_KEY'];
+  final String? baseUrl=dotenv.env['API_BASE_URL'];
 
   Future<Movie> fetchMovie(int movieId) async {
     final response = await http.get(Uri.parse('$baseUrl/$movieId?api_key=$apiKey'));

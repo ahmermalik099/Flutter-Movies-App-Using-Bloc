@@ -8,7 +8,7 @@ import 'api/movie_api.dart';
 import 'bloc/movies/movies_bloc.dart';
 
 Future<void> main() async{
-  await dotenv.load(fileName: ".env.dart");
+  await dotenv.load(fileName: 'assets/.env.dart');
   runApp(const MyApp());
 }
 

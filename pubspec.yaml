@@ -24,8 +24,6 @@ dependencies:
   equatable: ^2.0.5
   flutter_bloc:
   bloc:
-  flutter_secure_storage_web:
-  flutter_secure_storage_windows:
   flutter_dotenv:
   sqflite:
   path:
